@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta Viewport optimizado para evitar zoom molesto en inputs de móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Proforma App - Free Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -24,10 +25,10 @@
             background-color: #ffffff;
             width: 210mm;
             min-height: 297mm;
-            margin: 2rem auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             position: relative;
             background-image: none;
+            flex-shrink: 0;
         }
 
         .print-area {
@@ -81,45 +82,98 @@
         }
 
         /* Scroll personalizado */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
         
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
         
         [v-cloak] { display: none; }
+
+        /* =======================================================
+           5 MEDIA QUERIES PARA RESPONSIVE Y ESCALADO DE LA PROFORMA
+           ======================================================= */
+        
+        /* 1. Celulares Pequeños (Ej. iPhone SE) */
+        @media (max-width: 480px) {
+            .proforma-wrapper { transform: scale(0.42); transform-origin: top left; }
+        }
+        
+        /* 2. Celulares Estándar/Grandes (Ej. iPhone 14 Pro, Androids) */
+        @media (min-width: 481px) and (max-width: 639px) {
+            .proforma-wrapper { transform: scale(0.55); transform-origin: top left; }
+        }
+        
+        /* 3. Tablets en modo Vertical */
+        @media (min-width: 640px) and (max-width: 767px) {
+            .proforma-wrapper { transform: scale(0.70); transform-origin: top left; }
+        }
+        
+        /* 4. Tablets en modo Horizontal / Laptops Pequeñas */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .proforma-wrapper { transform: scale(0.85); transform-origin: top center; }
+        }
+        
+        /* 5. Escritorio / Monitores (Resolución completa) */
+        @media (min-width: 1024px) {
+            .proforma-wrapper { transform: scale(1); transform-origin: top center; }
+        }
+
+        /* Restablecer tamaño original al exportar PDF sin importar la pantalla */
+        .is-generating-pdf .proforma-wrapper {
+            transform: scale(1) !important;
+            margin: 0 !important;
+        }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
-    <div id="app" class="flex w-full h-full" v-cloak>
+<body class="flex h-screen overflow-hidden bg-slate-900">
+    <div id="app" class="flex w-full h-full relative" v-cloak>
         
-        <!-- Panel de Control Izquierdo -->
-        <div class="w-[380px] min-w-[380px] h-full bg-slate-900 text-slate-200 flex flex-col border-r border-slate-700 shadow-2xl z-10">
-            <!-- Pestañas de navegación -->
-            <div class="flex border-b border-slate-700">
-                <button @click="activeTab = 'profile'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'profile'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+        <!-- OVERLAY MÓVIL (Fondo oscuro al abrir el menú) -->
+        <transition name="fade">
+            <div v-if="isMobileMenuOpen" @click="isMobileMenuOpen = false" class="fixed inset-0 bg-black/70 z-30 lg:hidden backdrop-blur-sm"></div>
+        </transition>
+
+        <!-- PANEL DE CONTROL IZQUIERDO (Responsive: Desplegable en móvil, fijo en PC) -->
+        <div :class="isMobileMenuOpen ? 'translate-x-0 shadow-[20px_0_50px_rgba(0,0,0,0.5)]' : '-translate-x-full lg:translate-x-0'" class="fixed lg:relative z-40 w-[85%] max-w-[380px] lg:w-[380px] lg:min-w-[380px] h-full bg-slate-900 text-slate-200 flex flex-col border-r border-slate-700 transition-transform duration-300 ease-in-out left-0 top-0">
+            
+            <!-- Cabecera Móvil (Solo visible en pantallas pequeñas) -->
+            <div class="lg:hidden flex justify-between items-center p-4 bg-slate-950 border-b border-slate-800">
+                <span class="font-bold text-blue-400 text-sm"><i class="fas fa-sliders-h mr-2"></i> Panel de Control</span>
+                <button @click="isMobileMenuOpen = false" class="text-slate-400 hover:text-white bg-slate-800 p-2 rounded-lg">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Pestañas de navegación (Hacemos scrollable para que no se aprieten) -->
+            <div class="flex overflow-x-auto border-b border-slate-700 scrollbar-hide bg-slate-900">
+                <button @click="activeTab = 'profile'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'profile'}" class="whitespace-nowrap px-4 py-3 flex-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
                     <i class="fas fa-user-tie mb-1 block text-base"></i> Perfil
                 </button>
-                <button @click="activeTab = 'generator'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'generator'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                <button @click="activeTab = 'generator'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'generator'}" class="whitespace-nowrap px-4 py-3 flex-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
                     <i class="fas fa-file-invoice mb-1 block text-base"></i> Proforma
                 </button>
-                <button @click="activeTab = 'history'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'history'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                <button @click="activeTab = 'history'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'history'}" class="whitespace-nowrap px-4 py-3 flex-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
                     <i class="fas fa-history mb-1 block text-base"></i> Historial
                 </button>
-                <button @click="activeTab = 'clients'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'clients'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                <button @click="activeTab = 'clients'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'clients'}" class="whitespace-nowrap px-4 py-3 flex-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
                     <i class="fas fa-users mb-1 block text-base"></i> Clientes
                 </button>
-                <button @click="activeTab = 'services'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'services'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                <button @click="activeTab = 'services'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'services'}" class="whitespace-nowrap px-4 py-3 flex-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
                     <i class="fas fa-box-open mb-1 block text-base"></i> Servicios
                 </button>
-                <button @click="activeTab = 'settings'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'settings'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                <button @click="activeTab = 'settings'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'settings'}" class="whitespace-nowrap px-4 py-3 flex-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
                     <i class="fas fa-cog mb-1 block text-base"></i> Ajustes
                 </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-5">
+            <!-- Contenido de las pestañas -->
+            <div class="flex-1 overflow-y-auto p-5 pb-20 lg:pb-5">
                 
                 <!-- PESTAÑA: MI PERFIL -->
                 <div v-show="activeTab === 'profile'" class="space-y-5">
@@ -154,11 +208,13 @@
                         <h3 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Mis Disciplinas</h3>
                         <p class="text-[10px] text-slate-400 mb-3">Selecciona a qué te dedicas para cargar los servicios sugeridos por el CDPA automáticamente en tu tarifario.</p>
                         
-                        <div class="space-y-2 mb-4">
+                        <div class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-2 scrollbar-hide">
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="identidad" class="rounded bg-slate-900 border-slate-700"><span>Identidad Corporativa</span></label>
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="papeleria" class="rounded bg-slate-900 border-slate-700"><span>Papelería / Diseño Impreso</span></label>
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="publicidad" class="rounded bg-slate-900 border-slate-700"><span>Publicidad y RRSS</span></label>
+                            <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="promocion" class="rounded bg-slate-900 border-slate-700"><span>Promoción / Merchandising</span></label>
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="editorial" class="rounded bg-slate-900 border-slate-700"><span>Diseño Editorial</span></label>
+                            <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="senalizacion" class="rounded bg-slate-900 border-slate-700"><span>Señalización y Espacios</span></label>
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="ilustracion" class="rounded bg-slate-900 border-slate-700"><span>Ilustración / 3D</span></label>
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="packaging" class="rounded bg-slate-900 border-slate-700"><span>Packaging / Envases</span></label>
                             <label class="flex items-center space-x-2 text-sm text-white cursor-pointer"><input type="checkbox" v-model="userProfile.disciplines" value="web" class="rounded bg-slate-900 border-slate-700"><span>Diseño Web / Apps</span></label>
@@ -212,7 +268,7 @@
                             </div>
                         </div>
 
-                        <!-- TOGGLE DE IVA MOVIDO AQUI -->
+                        <!-- TOGGLE DE IVA -->
                         <div class="flex items-center justify-between text-sm text-slate-300 mt-4 pt-4 border-t border-slate-700">
                             <div>
                                 <span class="block font-bold text-white">Facturar con IVA (15%)</span>
@@ -463,247 +519,259 @@
 
             </div>
             
-            <div class="p-3 bg-slate-950 text-[10px] text-slate-500 text-center border-t border-slate-800">
+            <div class="hidden lg:block p-3 bg-slate-950 text-[10px] text-slate-500 text-center border-t border-slate-800 absolute bottom-0 w-full">
                 Datos guardados localmente (Modo Offline/Free)
             </div>
         </div>
 
-        <!-- Lienzo Derecho (Proforma Visual) -->
-        <div class="flex-1 bg-gray-200 overflow-y-auto flex justify-center items-start p-8 relative" :class="{'is-generating-pdf': isGeneratingPDF}">
+        <!-- LIENZO DERECHO (Proforma Visual) -->
+        <div class="flex-1 bg-gray-200 overflow-y-auto flex flex-col items-center p-2 pt-20 sm:p-4 sm:pt-24 md:p-6 lg:p-8 lg:pt-8 relative w-full" :class="{'is-generating-pdf': isGeneratingPDF}">
             
             <!-- Notificación flotante -->
             <transition name="fade">
-                <div v-if="notification" class="absolute top-4 right-8 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl z-50 flex items-center border-l-4 border-blue-500">
+                <div v-if="notification" class="fixed top-4 right-4 md:right-8 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl z-50 flex items-center border-l-4 border-blue-500 text-sm">
                     <i class="fas fa-info-circle mr-3 text-blue-400"></i>
                     {{ notification }}
                 </div>
             </transition>
 
-            <!-- CONTENEDOR PDF -->
-            <div id="proforma-document" class="proforma-container print-area">
+            <!-- BOTÓN MÓVIL PARA ABRIR MENÚ (ARRIBA A LA IZQUIERDA) -->
+            <button @click="isMobileMenuOpen = true" class="lg:hidden fixed top-4 left-4 bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-lg z-20 hover:bg-slate-800 transition-colors flex items-center justify-center border border-slate-700">
+                <i class="fas fa-bars mr-2"></i> <span class="text-sm font-bold tracking-wider">MENÚ</span>
+            </button>
+
+            <!-- CONTENEDOR WRAPPER RESPONSIVE -->
+            <div class="proforma-wrapper flex justify-center">
                 
-                <!-- DISEÑO 1: CLÁSICO (ACTUAL) -->
-                <div v-if="userProfile.selectedDesign === 'classic'" class="w-full">
-                    <div class="header-bg p-10 flex justify-between items-start">
-                        <div class="w-1/2">
-                            <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-24 object-contain">
-                            <img v-else src="https://placehold.co/400x150/ffffff/1a1924?text=MI+LOGO" alt="Logo" class="max-h-24 object-contain opacity-50">
-                            
-                            <div class="text-[11px] text-gray-500 mt-4 space-y-1.5 font-medium">
-                                <div class="font-bold text-gray-800 text-sm mb-2" v-if="userProfile.name">{{ userProfile.name }}</div>
-                                <div class="flex items-center" v-if="userProfile.phone"><i class="fas fa-phone-alt w-5 text-gray-400"></i><span class="ml-2">{{ userProfile.phone }}</span></div>
-                                <div class="flex items-center" v-if="userProfile.email"><i class="fas fa-envelope w-5 text-gray-400"></i><span class="ml-2">{{ userProfile.email }}</span></div>
-                                <div class="flex items-center" v-if="userProfile.address"><i class="fas fa-map-marker-alt w-5 text-gray-400"></i><span class="ml-2">{{ userProfile.address }}</span></div>
+                <!-- CONTENEDOR PDF -->
+                <div id="proforma-document" class="proforma-container print-area flex flex-col">
+                    
+                    <!-- DISEÑO 1: CLÁSICO (ACTUAL) -->
+                    <div v-if="userProfile.selectedDesign === 'classic'" class="w-full">
+                        <div class="header-bg p-10 flex justify-between items-start">
+                            <div class="w-1/2">
+                                <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-24 object-contain">
+                                <img v-else src="https://placehold.co/400x150/ffffff/1a1924?text=MI+LOGO" alt="Logo" class="max-h-24 object-contain opacity-50">
+                                
+                                <div class="text-[11px] text-gray-500 mt-4 space-y-1.5 font-medium">
+                                    <div class="font-bold text-gray-800 text-sm mb-2" v-if="userProfile.name">{{ userProfile.name }}</div>
+                                    <div class="flex items-center" v-if="userProfile.phone"><i class="fas fa-phone-alt w-5 text-gray-400"></i><span class="ml-2">{{ userProfile.phone }}</span></div>
+                                    <div class="flex items-center" v-if="userProfile.email"><i class="fas fa-envelope w-5 text-gray-400"></i><span class="ml-2">{{ userProfile.email }}</span></div>
+                                    <div class="flex items-center" v-if="userProfile.address"><i class="fas fa-map-marker-alt w-5 text-gray-400"></i><span class="ml-2">{{ userProfile.address }}</span></div>
+                                </div>
+                            </div>
+                            <div class="w-1/2 text-right">
+                                <h1 class="text-4xl font-bold tracking-widest mb-2 uppercase" :style="{ color: userProfile.brandColor }">Proforma</h1>
+                                <div class="flex justify-end items-center text-sm mb-1"><span class="font-bold mr-2 w-24">Nº:</span><span class="text-gray-600">#{{ invoiceData.number }}</span></div>
+                                <div class="flex justify-end items-center text-sm"><span class="font-bold mr-2 w-24">FECHA:</span><span class="text-gray-600">{{ formattedDate }}</span></div>
                             </div>
                         </div>
-                        <div class="w-1/2 text-right">
-                            <h1 class="text-4xl font-bold tracking-widest mb-2 uppercase" :style="{ color: userProfile.brandColor }">Proforma</h1>
-                            <div class="flex justify-end items-center text-sm mb-1"><span class="font-bold mr-2 w-24">Nº:</span><span class="text-gray-600">#{{ invoiceData.number }}</span></div>
-                            <div class="flex justify-end items-center text-sm"><span class="font-bold mr-2 w-24">FECHA:</span><span class="text-gray-600">{{ formattedDate }}</span></div>
+
+                        <div class="px-10 py-6 flex justify-between items-start">
+                            <div class="w-1/2">
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Proforma a nombre de:</h3>
+                                <h2 class="text-xl font-bold mb-1" :style="{ color: userProfile.brandColor }">
+                                    <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold" placeholder="Nombre del Cliente">
+                                </h2>
+                                <div class="text-sm text-gray-600 space-y-2 mt-3">
+                                    <div class="flex items-center" v-show="invoiceData.clientAddress || !isGeneratingPDF">
+                                        <i class="fas fa-map-marker-alt w-6 text-gray-400 text-center"></i> 
+                                        <input type="text" v-model="invoiceData.clientAddress" class="editable-input flex-1" placeholder="Dirección">
+                                    </div>
+                                    <div class="flex items-center" v-show="invoiceData.clientPhone || !isGeneratingPDF">
+                                        <i class="fas fa-phone w-6 text-gray-400 text-center"></i> 
+                                        <input type="text" v-model="invoiceData.clientPhone" class="editable-input flex-1" placeholder="Teléfono">
+                                    </div>
+                                    <div class="flex items-center" v-show="invoiceData.clientEmail || !isGeneratingPDF">
+                                        <i class="fas fa-envelope w-6 text-gray-400 text-center"></i> 
+                                        <input type="text" v-model="invoiceData.clientEmail" class="editable-input flex-1" placeholder="Correo electrónico">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-1/3 text-right">
+                                <div class="bg-gray-50 p-4 border border-gray-100 rounded">
+                                    <p class="text-xs text-gray-500 font-bold mb-1">Total a Pagar</p>
+                                    <p class="text-2xl font-bold" :style="{ color: userProfile.brandColor }">${{ grandTotal.toFixed(2) }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="px-10 py-6 flex justify-between items-start">
-                        <div class="w-1/2">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Proforma a nombre de:</h3>
-                            <h2 class="text-xl font-bold mb-1" :style="{ color: userProfile.brandColor }">
-                                <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold" placeholder="Nombre del Cliente">
-                            </h2>
-                            <div class="text-sm text-gray-600 space-y-2 mt-3">
-                                <div class="flex items-center" v-show="invoiceData.clientAddress || !isGeneratingPDF">
-                                    <i class="fas fa-map-marker-alt w-6 text-gray-400 text-center"></i> 
-                                    <input type="text" v-model="invoiceData.clientAddress" class="editable-input flex-1" placeholder="Dirección">
+                    <!-- DISEÑO 2: MODERNO (BLOQUE OSCURO) -->
+                    <div v-else-if="userProfile.selectedDesign === 'modern'" class="w-full relative">
+                        <div class="flex justify-between items-center px-10 py-8">
+                            <div class="w-1/2">
+                                <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-20 object-contain">
+                                <h2 v-else class="text-2xl font-bold text-gray-800">{{ userProfile.name || 'MI EMPRESA' }}</h2>
+                            </div>
+                            <div class="w-1/2 text-right">
+                                <h1 class="text-4xl font-light tracking-widest text-gray-300 uppercase">Proforma</h1>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 px-10 py-8 flex justify-between relative mt-2">
+                            <div class="w-1/2 text-sm text-gray-300 space-y-2 relative z-10">
+                                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Proforma para:</p>
+                                <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold text-lg text-white" placeholder="Nombre del Cliente">
+                                <input v-show="invoiceData.clientAddress || !isGeneratingPDF" type="text" v-model="invoiceData.clientAddress" class="editable-input block w-full text-xs" placeholder="Dirección">
+                                <div class="flex gap-4 text-xs mt-1">
+                                    <input v-show="invoiceData.clientPhone || !isGeneratingPDF" type="text" v-model="invoiceData.clientPhone" class="editable-input w-1/2" placeholder="Teléfono">
+                                    <input v-show="invoiceData.clientEmail || !isGeneratingPDF" type="text" v-model="invoiceData.clientEmail" class="editable-input w-1/2" placeholder="Correo">
                                 </div>
-                                <div class="flex items-center" v-show="invoiceData.clientPhone || !isGeneratingPDF">
-                                    <i class="fas fa-phone w-6 text-gray-400 text-center"></i> 
-                                    <input type="text" v-model="invoiceData.clientPhone" class="editable-input flex-1" placeholder="Teléfono">
-                                </div>
-                                <div class="flex items-center" v-show="invoiceData.clientEmail || !isGeneratingPDF">
-                                    <i class="fas fa-envelope w-6 text-gray-400 text-center"></i> 
-                                    <input type="text" v-model="invoiceData.clientEmail" class="editable-input flex-1" placeholder="Correo electrónico">
+                            </div>
+                            
+                            <div class="w-2/5 bg-white p-6 shadow-xl absolute right-10 -top-8 border-t-8" :style="{ borderColor: userProfile.brandColor }">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-right">Total a Pagar</p>
+                                <p class="text-3xl font-bold text-right" :style="{ color: userProfile.brandColor }">${{ grandTotal.toFixed(2) }}</p>
+                                <div class="flex justify-between mt-4 pt-4 border-t border-gray-100 text-[10px] text-gray-500 font-mono">
+                                    <div><span class="block font-bold">Nº PROFORMA</span>#{{ invoiceData.number }}</div>
+                                    <div class="text-right"><span class="block font-bold">FECHA</span>{{ formattedDate }}</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="w-1/3 text-right">
-                            <div class="bg-gray-50 p-4 border border-gray-100 rounded">
-                                <p class="text-xs text-gray-500 font-bold mb-1">Total a Pagar</p>
+                    </div>
+
+                    <!-- DISEÑO 3: ELEGANTE (CURVAS Y BORDES) -->
+                    <div v-else-if="userProfile.selectedDesign === 'elegant'" class="w-full">
+                        <div class="flex justify-between items-start border-b-2 border-gray-100 pb-8">
+                            <div class="w-1/2 p-10 rounded-br-[60px]" :style="{ backgroundColor: userProfile.brandColor }">
+                                <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-24 object-contain">
+                                <h2 v-else class="text-3xl font-bold text-white">{{ userProfile.name || 'MI EMPRESA' }}</h2>
+                            </div>
+                            <div class="w-1/2 p-10 text-right text-[11px] text-gray-500 space-y-1">
+                                <div class="font-bold text-gray-800 text-sm mb-2" v-if="userProfile.name">{{ userProfile.name }}</div>
+                                <div v-if="userProfile.phone">{{ userProfile.phone }}</div>
+                                <div v-if="userProfile.email">{{ userProfile.email }}</div>
+                                <div v-if="userProfile.address">{{ userProfile.address }}</div>
+                            </div>
+                        </div>
+
+                        <div class="px-10 py-8 flex justify-between items-end">
+                            <div class="w-1/3">
+                                <h1 class="text-4xl font-black uppercase tracking-tight" :style="{ color: userProfile.brandColor }">Proforma</h1>
+                                <div class="text-xs text-gray-500 font-mono mt-2">Nº #{{ invoiceData.number }} | {{ formattedDate }}</div>
+                            </div>
+                            <div class="w-1/2 text-right text-sm">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1" :style="{ color: userProfile.brandColor }">Proforma Para:</p>
+                                <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold text-lg text-gray-800 text-right" placeholder="Nombre del Cliente">
+                                <input v-show="invoiceData.clientAddress || !isGeneratingPDF" type="text" v-model="invoiceData.clientAddress" class="editable-input text-gray-500 text-right text-xs" placeholder="Dirección">
+                                <input v-show="invoiceData.clientPhone || !isGeneratingPDF" type="text" v-model="invoiceData.clientPhone" class="editable-input text-gray-500 text-right text-xs" placeholder="Teléfono / Email">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DISEÑO 4: MINIMALISTA (LIMPIO) -->
+                    <div v-else-if="userProfile.selectedDesign === 'minimalist'" class="w-full">
+                        <div class="px-12 pt-12 pb-6 flex justify-between items-end border-b border-gray-200">
+                            <div class="w-1/2">
+                                <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-16 object-contain">
+                                <h2 v-else class="text-xl font-bold text-gray-800">{{ userProfile.name || 'MI EMPRESA' }}</h2>
+                                <p class="text-[10px] text-gray-400 mt-2">{{ userProfile.phone }} | {{ userProfile.email }}</p>
+                            </div>
+                            <div class="w-1/2 text-right">
+                                <h1 class="text-3xl font-light text-gray-400 uppercase mb-1">Proforma</h1>
+                                <div class="text-xs text-gray-500"><span class="font-bold mr-2">Nº:</span>#{{ invoiceData.number }} &nbsp;|&nbsp; <span class="font-bold ml-2 mr-2">Fecha:</span>{{ formattedDate }}</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 mx-12 mt-8 mb-4 p-6 rounded flex justify-between items-center border border-gray-100">
+                            <div class="w-1/2">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Cliente</p>
+                                <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold text-gray-800" placeholder="Nombre del Cliente">
+                                <input v-show="invoiceData.clientAddress || !isGeneratingPDF" type="text" v-model="invoiceData.clientAddress" class="editable-input text-gray-500 text-xs" placeholder="Dirección">
+                            </div>
+                            <div class="w-1/3 text-right">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total a Pagar</p>
                                 <p class="text-2xl font-bold" :style="{ color: userProfile.brandColor }">${{ grandTotal.toFixed(2) }}</p>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- DISEÑO 2: MODERNO (BLOQUE OSCURO) -->
-                <div v-else-if="userProfile.selectedDesign === 'modern'" class="w-full relative">
-                    <div class="flex justify-between items-center px-10 py-8">
-                        <div class="w-1/2">
-                            <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-20 object-contain">
-                            <h2 v-else class="text-2xl font-bold text-gray-800">{{ userProfile.name || 'MI EMPRESA' }}</h2>
-                        </div>
-                        <div class="w-1/2 text-right">
-                            <h1 class="text-4xl font-light tracking-widest text-gray-300 uppercase">Proforma</h1>
-                        </div>
-                    </div>
+                    <!-- SECCIÓN COMÚN: TABLA DE SERVICIOS -->
+                    <div class="px-10 mb-2 mt-4 flex-1 flex flex-col" :class="{'px-12': userProfile.selectedDesign === 'minimalist'}">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs uppercase tracking-wider text-white" :style="{ backgroundColor: userProfile.brandColor }">
+                                    <th class="py-3 px-4 font-semibold w-7/12" :class="{'rounded-l-lg': userProfile.selectedDesign === 'minimalist'}">Descripción</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-1/12">Cant.</th>
+                                    <th class="py-3 px-4 font-semibold text-right w-2/12">P. Unit</th>
+                                    <th class="py-3 px-4 font-semibold text-right w-2/12" :class="{'rounded-r-lg': userProfile.selectedDesign === 'minimalist'}">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="proformaServices.length === 0">
+                                    <td colspan="4" class="py-10 text-center text-gray-400 italic border-b border-gray-100">Agrega servicios desde el panel izquierdo...</td>
+                                </tr>
+                                <tr v-for="(item, index) in proformaServices" :key="index" class="group hover:bg-gray-50 transition-colors border-b border-gray-100" :class="{'bg-gray-50 border-white border-b-4': index % 2 !== 0 && userProfile.selectedDesign === 'modern'}" style="page-break-inside: avoid;">
+                                    <td class="py-3 px-4 relative">
+                                        <button v-show="!isGeneratingPDF" @click="removeService(index)" class="absolute -left-6 top-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow p-1"><i class="fas fa-times"></i></button>
+                                        <div v-if="isGeneratingPDF" class="font-bold text-gray-800 text-sm mb-1 whitespace-pre-wrap">{{ item.name }}</div>
+                                        <input v-else type="text" v-model="item.name" class="editable-input font-bold text-gray-800 text-sm mb-1">
+                                        <div v-if="isGeneratingPDF" class="text-xs text-gray-500 w-full block whitespace-pre-wrap">{{ item.description }}</div>
+                                        <textarea v-else v-model="item.description" rows="2" class="editable-input text-xs text-gray-500 resize-none w-full block" @input="resizeTextarea"></textarea>
+                                    </td>
+                                    <td class="py-3 px-2 text-center align-top">
+                                        <div v-if="isGeneratingPDF" class="text-center text-sm font-semibold text-gray-700">{{ item.quantity }}</div>
+                                        <input v-else type="number" v-model.number="item.quantity" class="editable-input text-center text-sm font-semibold text-gray-700 w-full" min="1">
+                                    </td>
+                                    <td class="py-3 px-4 text-right align-top">
+                                        <div class="flex items-center justify-end">
+                                            <span class="text-gray-400 text-sm mr-1">$</span>
+                                            <div v-if="isGeneratingPDF" class="text-right text-sm font-semibold text-gray-700">{{ item.price }}</div>
+                                            <input v-else type="number" v-model.number="item.price" class="editable-input text-right text-sm font-semibold text-gray-700 w-20">
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-bold text-gray-800 align-top text-sm">
+                                        ${{ (item.quantity * item.price).toFixed(2) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                    <div class="bg-gray-800 px-10 py-8 flex justify-between relative mt-2">
-                        <div class="w-1/2 text-sm text-gray-300 space-y-2 relative z-10">
-                            <p class="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Proforma para:</p>
-                            <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold text-lg text-white" placeholder="Nombre del Cliente">
-                            <input v-show="invoiceData.clientAddress || !isGeneratingPDF" type="text" v-model="invoiceData.clientAddress" class="editable-input block w-full text-xs" placeholder="Dirección">
-                            <div class="flex gap-4 text-xs mt-1">
-                                <input v-show="invoiceData.clientPhone || !isGeneratingPDF" type="text" v-model="invoiceData.clientPhone" class="editable-input w-1/2" placeholder="Teléfono">
-                                <input v-show="invoiceData.clientEmail || !isGeneratingPDF" type="text" v-model="invoiceData.clientEmail" class="editable-input w-1/2" placeholder="Correo">
+                        <!-- Espaciador flexible para empujar totales hacia abajo si hay poco contenido -->
+                        <div class="flex-1"></div>
+
+                        <!-- Totales (Diseño ajustado según plantilla) -->
+                        <div class="flex justify-end mt-6" :class="{'justify-between items-end': userProfile.selectedDesign === 'elegant'}">
+                            
+                            <div v-if="userProfile.selectedDesign === 'elegant'" class="w-1/2 p-4 bg-gray-50 text-[10px] text-gray-500 rounded-lg">
+                                <p class="font-bold text-gray-700 uppercase mb-2">Notas / Condiciones:</p>
+                                <p>Esta proforma tiene una validez de 15 días.</p>
                             </div>
-                        </div>
-                        
-                        <div class="w-2/5 bg-white p-6 shadow-xl absolute right-10 -top-8 border-t-8" :style="{ borderColor: userProfile.brandColor }">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-right">Total a Pagar</p>
-                            <p class="text-3xl font-bold text-right" :style="{ color: userProfile.brandColor }">${{ grandTotal.toFixed(2) }}</p>
-                            <div class="flex justify-between mt-4 pt-4 border-t border-gray-100 text-[10px] text-gray-500 font-mono">
-                                <div><span class="block font-bold">Nº PROFORMA</span>#{{ invoiceData.number }}</div>
-                                <div class="text-right"><span class="block font-bold">FECHA</span>{{ formattedDate }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- DISEÑO 3: ELEGANTE (CURVAS Y BORDES) -->
-                <div v-else-if="userProfile.selectedDesign === 'elegant'" class="w-full">
-                    <div class="flex justify-between items-start border-b-2 border-gray-100 pb-8">
-                        <div class="w-1/2 p-10 rounded-br-[60px]" :style="{ backgroundColor: userProfile.brandColor }">
-                            <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-24 object-contain">
-                            <h2 v-else class="text-3xl font-bold text-white">{{ userProfile.name || 'MI EMPRESA' }}</h2>
-                        </div>
-                        <div class="w-1/2 p-10 text-right text-[11px] text-gray-500 space-y-1">
-                            <div class="font-bold text-gray-800 text-sm mb-2" v-if="userProfile.name">{{ userProfile.name }}</div>
-                            <div v-if="userProfile.phone">{{ userProfile.phone }}</div>
-                            <div v-if="userProfile.email">{{ userProfile.email }}</div>
-                            <div v-if="userProfile.address">{{ userProfile.address }}</div>
-                        </div>
-                    </div>
-
-                    <div class="px-10 py-8 flex justify-between items-end">
-                        <div class="w-1/3">
-                            <h1 class="text-4xl font-black uppercase tracking-tight" :style="{ color: userProfile.brandColor }">Proforma</h1>
-                            <div class="text-xs text-gray-500 font-mono mt-2">Nº #{{ invoiceData.number }} | {{ formattedDate }}</div>
-                        </div>
-                        <div class="w-1/2 text-right text-sm">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1" :style="{ color: userProfile.brandColor }">Proforma Para:</p>
-                            <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold text-lg text-gray-800 text-right" placeholder="Nombre del Cliente">
-                            <input v-show="invoiceData.clientAddress || !isGeneratingPDF" type="text" v-model="invoiceData.clientAddress" class="editable-input text-gray-500 text-right text-xs" placeholder="Dirección">
-                            <input v-show="invoiceData.clientPhone || !isGeneratingPDF" type="text" v-model="invoiceData.clientPhone" class="editable-input text-gray-500 text-right text-xs" placeholder="Teléfono / Email">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DISEÑO 4: MINIMALISTA (LIMPIO) -->
-                <div v-else-if="userProfile.selectedDesign === 'minimalist'" class="w-full">
-                    <div class="px-12 pt-12 pb-6 flex justify-between items-end border-b border-gray-200">
-                        <div class="w-1/2">
-                            <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-16 object-contain">
-                            <h2 v-else class="text-xl font-bold text-gray-800">{{ userProfile.name || 'MI EMPRESA' }}</h2>
-                            <p class="text-[10px] text-gray-400 mt-2">{{ userProfile.phone }} | {{ userProfile.email }}</p>
-                        </div>
-                        <div class="w-1/2 text-right">
-                            <h1 class="text-3xl font-light text-gray-400 uppercase mb-1">Proforma</h1>
-                            <div class="text-xs text-gray-500"><span class="font-bold mr-2">Nº:</span>#{{ invoiceData.number }} &nbsp;|&nbsp; <span class="font-bold ml-2 mr-2">Fecha:</span>{{ formattedDate }}</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 mx-12 mt-8 mb-4 p-6 rounded flex justify-between items-center border border-gray-100">
-                        <div class="w-1/2">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Cliente</p>
-                            <input type="text" v-model="invoiceData.clientName" class="editable-input font-bold text-gray-800" placeholder="Nombre del Cliente">
-                            <input v-show="invoiceData.clientAddress || !isGeneratingPDF" type="text" v-model="invoiceData.clientAddress" class="editable-input text-gray-500 text-xs" placeholder="Dirección">
-                        </div>
-                        <div class="w-1/3 text-right">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total a Pagar</p>
-                            <p class="text-2xl font-bold" :style="{ color: userProfile.brandColor }">${{ grandTotal.toFixed(2) }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN COMÚN: TABLA DE SERVICIOS -->
-                <div class="px-10 mb-2 mt-4 min-h-[250px]" :class="{'px-12': userProfile.selectedDesign === 'minimalist'}">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-xs uppercase tracking-wider text-white" :style="{ backgroundColor: userProfile.brandColor }">
-                                <th class="py-3 px-4 font-semibold w-7/12" :class="{'rounded-l-lg': userProfile.selectedDesign === 'minimalist'}">Descripción</th>
-                                <th class="py-3 px-4 font-semibold text-center w-1/12">Cant.</th>
-                                <th class="py-3 px-4 font-semibold text-right w-2/12">P. Unit</th>
-                                <th class="py-3 px-4 font-semibold text-right w-2/12" :class="{'rounded-r-lg': userProfile.selectedDesign === 'minimalist'}">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-if="proformaServices.length === 0">
-                                <td colspan="4" class="py-10 text-center text-gray-400 italic border-b border-gray-100">Agrega servicios desde el panel izquierdo...</td>
-                            </tr>
-                            <tr v-for="(item, index) in proformaServices" :key="index" class="group hover:bg-gray-50 transition-colors border-b border-gray-100" :class="{'bg-gray-50 border-white border-b-4': index % 2 !== 0 && userProfile.selectedDesign === 'modern'}" style="page-break-inside: avoid;">
-                                <td class="py-3 px-4 relative">
-                                    <button v-show="!isGeneratingPDF" @click="removeService(index)" class="absolute -left-6 top-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow p-1"><i class="fas fa-times"></i></button>
-                                    <div v-if="isGeneratingPDF" class="font-bold text-gray-800 text-sm mb-1 whitespace-pre-wrap">{{ item.name }}</div>
-                                    <input v-else type="text" v-model="item.name" class="editable-input font-bold text-gray-800 text-sm mb-1">
-                                    <div v-if="isGeneratingPDF" class="text-xs text-gray-500 w-full block whitespace-pre-wrap">{{ item.description }}</div>
-                                    <textarea v-else v-model="item.description" rows="2" class="editable-input text-xs text-gray-500 resize-none w-full block" @input="resizeTextarea"></textarea>
-                                </td>
-                                <td class="py-3 px-2 text-center align-top">
-                                    <div v-if="isGeneratingPDF" class="text-center text-sm font-semibold text-gray-700">{{ item.quantity }}</div>
-                                    <input v-else type="number" v-model.number="item.quantity" class="editable-input text-center text-sm font-semibold text-gray-700 w-full" min="1">
-                                </td>
-                                <td class="py-3 px-4 text-right align-top">
-                                    <div class="flex items-center justify-end">
-                                        <span class="text-gray-400 text-sm mr-1">$</span>
-                                        <div v-if="isGeneratingPDF" class="text-right text-sm font-semibold text-gray-700">{{ item.price }}</div>
-                                        <input v-else type="number" v-model.number="item.price" class="editable-input text-right text-sm font-semibold text-gray-700 w-20">
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4 text-right font-bold text-gray-800 align-top text-sm">
-                                    ${{ (item.quantity * item.price).toFixed(2) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <!-- Totales (Diseño ajustado según plantilla) -->
-                    <div class="flex justify-end mt-4" :class="{'justify-between items-end': userProfile.selectedDesign === 'elegant'}">
-                        
-                        <div v-if="userProfile.selectedDesign === 'elegant'" class="w-1/2 p-4 bg-gray-50 text-[10px] text-gray-500 rounded-lg">
-                            <p class="font-bold text-gray-700 uppercase mb-2">Notas / Condiciones:</p>
-                            <p>Esta proforma tiene una validez de 15 días.</p>
-                        </div>
-
-                        <div class="w-2/5" :class="{'bg-gray-50 p-4 rounded-xl': userProfile.selectedDesign === 'minimalist'}">
-                            <div class="flex justify-between py-1.5 text-sm text-gray-600 border-b border-gray-100">
-                                <span>Subtotal</span><span>${{ subtotal.toFixed(2) }}</span>
-                            </div>
-                            <div class="flex justify-between py-1.5 text-sm text-gray-600 border-b border-gray-100">
-                                <span>{{ userProfile.chargesIVA ? 'IVA (15%)' : 'Sin Impuestos' }}</span><span>${{ ivaAmount.toFixed(2) }}</span>
-                            </div>
-                            <div class="flex justify-between py-3 text-lg font-bold mt-1" 
-                                :class="{'bg-gray-800 text-white px-4 rounded shadow-lg': userProfile.selectedDesign === 'elegant', 'border-b-2 border-gray-800': userProfile.selectedDesign === 'classic'}"
-                                :style="{ color: userProfile.selectedDesign === 'elegant' ? '#ffffff' : userProfile.brandColor, backgroundColor: userProfile.selectedDesign === 'elegant' ? userProfile.brandColor : 'transparent' }">
-                                <span>Total Neto</span><span>${{ grandTotal.toFixed(2) }}</span>
+                            <div class="w-2/5" :class="{'bg-gray-50 p-4 rounded-xl': userProfile.selectedDesign === 'minimalist'}">
+                                <div class="flex justify-between py-1.5 text-sm text-gray-600 border-b border-gray-100">
+                                    <span>Subtotal</span><span>${{ subtotal.toFixed(2) }}</span>
+                                </div>
+                                <div class="flex justify-between py-1.5 text-sm text-gray-600 border-b border-gray-100">
+                                    <span>{{ userProfile.chargesIVA ? 'IVA (15%)' : 'Sin Impuestos' }}</span><span>${{ ivaAmount.toFixed(2) }}</span>
+                                </div>
+                                <div class="flex justify-between py-3 text-lg font-bold mt-1" 
+                                    :class="{'bg-gray-800 text-white px-4 rounded shadow-lg': userProfile.selectedDesign === 'elegant', 'border-b-2 border-gray-800': userProfile.selectedDesign === 'classic'}"
+                                    :style="{ color: userProfile.selectedDesign === 'elegant' ? '#ffffff' : userProfile.brandColor, backgroundColor: userProfile.selectedDesign === 'elegant' ? userProfile.brandColor : 'transparent' }">
+                                    <span>Total Neto</span><span>${{ grandTotal.toFixed(2) }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- SECCIÓN COMÚN: TÉRMINOS Y CONDICIONES -->
-                <div class="px-10 pb-8 mt-6" :class="{'px-12': userProfile.selectedDesign === 'minimalist', 'opacity-50 text-[9px]': userProfile.selectedDesign === 'modern'}">
-                    <h3 class="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center justify-between">
-                        <span :style="{ color: userProfile.selectedDesign === 'minimalist' ? userProfile.brandColor : 'inherit' }">Términos y Condiciones</span>
-                        <button v-show="!isGeneratingPDF" @click="addTerm" class="text-blue-500 hover:text-blue-700 text-[10px] bg-blue-50 px-2 py-1 rounded transition-colors"><i class="fas fa-plus"></i> Añadir término</button>
-                    </h3>
-                    <div class="text-[10px] text-gray-500 space-y-1.5">
-                        <div v-for="(term, index) in termsAndConditions" :key="index" class="flex items-start group relative">
-                            <i class="fas fa-circle text-[4px] mr-2 mt-2" :style="{ color: userProfile.brandColor }"></i> 
-                            <div v-if="isGeneratingPDF" class="flex-1 whitespace-pre-wrap leading-relaxed">{{ term }}</div>
-                            <textarea v-else v-model="termsAndConditions[index]" class="editable-input flex-1 resize-none bg-transparent leading-relaxed" @input="resizeTextarea" rows="1"></textarea>
-                            <button v-show="!isGeneratingPDF" @click="removeTerm(index)" class="absolute -left-6 top-0 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow p-1"><i class="fas fa-times"></i></button>
+                    <!-- SECCIÓN COMÚN: TÉRMINOS Y CONDICIONES -->
+                    <div class="px-10 pb-10 mt-6" :class="{'px-12': userProfile.selectedDesign === 'minimalist', 'opacity-50 text-[9px]': userProfile.selectedDesign === 'modern'}">
+                        <h3 class="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center justify-between">
+                            <span :style="{ color: userProfile.selectedDesign === 'minimalist' ? userProfile.brandColor : 'inherit' }">Términos y Condiciones</span>
+                            <button v-show="!isGeneratingPDF" @click="addTerm" class="text-blue-500 hover:text-blue-700 text-[10px] bg-blue-50 px-2 py-1 rounded transition-colors"><i class="fas fa-plus"></i> Añadir término</button>
+                        </h3>
+                        <div class="text-[10px] text-gray-500 space-y-1.5">
+                            <div v-for="(term, index) in termsAndConditions" :key="index" class="flex items-start group relative">
+                                <i class="fas fa-circle text-[4px] mr-2 mt-2" :style="{ color: userProfile.brandColor }"></i> 
+                                <div v-if="isGeneratingPDF" class="flex-1 whitespace-pre-wrap leading-relaxed">{{ term }}</div>
+                                <textarea v-else v-model="termsAndConditions[index]" class="editable-input flex-1 resize-none bg-transparent leading-relaxed" @input="resizeTextarea" rows="1"></textarea>
+                                <button v-show="!isGeneratingPDF" @click="removeTerm(index)" class="absolute -left-6 top-0 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow p-1"><i class="fas fa-times"></i></button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
+                </div>
             </div>
         </div>
     </div>
@@ -711,6 +779,7 @@
     <script type="module">
         import { createApp, ref, computed, onMounted, nextTick, watch } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
 
+        // BASE DE DATOS COMPLETA TARIFARIO CDPA
         const cdpaData = {
             identidad: [
                 { name: 'Nueva Identidad Corporativa', description: 'Nuevo logotipo, Isotipo o Isologotipo + Manual de Uso y hasta 10 aplicaciones.', priceA: 1500, priceB: 850, priceC: 550 },
@@ -745,6 +814,11 @@
                 { name: 'Gestión de Comunidad (Community Manager)', description: 'Costo mensual x cuenta. Posteos/actualizaciones.', priceA: 120, priceB: 80, priceC: 40 },
                 { name: 'Social Media Plan', description: 'Planteo de estrategia de marketing y comunicación en redes sociales.', priceA: 280, priceB: 200, priceC: 150 }
             ],
+            promocion: [
+                { name: 'Merchandising', description: 'Hasta 10 piezas (camiseta, llavero, pin, gorra, taza, etc).', priceA: 300, priceB: 220, priceC: 120 },
+                { name: 'Camisetas', description: 'Aplicación de logo simple o identidad previamente diseñada.', priceA: 70, priceB: 40, priceC: 20 },
+                { name: 'Bolsas / Envoltorios', description: 'Aplicación de logo simple o identidad previamente diseñada.', priceA: 50, priceB: 30, priceC: 20 }
+            ],
             editorial: [
                 { name: 'Arte de tapa', description: 'Tapa, contratapa y lomo (revista, libro, etc.)', priceA: 200, priceB: 150, priceC: 100 },
                 { name: 'Armado de página simple', description: 'Costo de diseño por página original. Libro, Memoria y Balance, etc.', priceA: 20, priceB: 10, priceC: 5 },
@@ -753,6 +827,12 @@
                 { name: 'Revista', description: 'Hasta 30 páginas. No incluye armado de publicidades.', priceA: 600, priceB: 400, priceC: 200 },
                 { name: 'Catálogo de productos', description: 'Hasta 20 páginas', priceA: 700, priceB: 500, priceC: 300 },
                 { name: 'Menú/carta para restaurante', description: 'Tapa y hasta 6 paginas.', priceA: 100, priceB: 60, priceC: 30 }
+            ],
+            senalizacion: [
+                { name: 'Ploteado vehicular', description: 'Complemento a identidad corporativa/institucional.', priceA: 100, priceB: 80, priceC: 40 },
+                { name: 'Banner', description: 'De pie, colgante, tipo pétalo/gota/wind', priceA: 70, priceB: 50, priceC: 30 },
+                { name: 'Diseño de Sistema señalético', description: 'Hasta 10 piezas (direccionales, locativas) + manual de aplicación.', priceA: 450, priceB: 250, priceC: 150 },
+                { name: 'Stand', description: 'Diseño morfológico, elección de mobiliario, etc.', priceA: 800, priceB: 600, priceC: 400 }
             ],
             ilustracion: [
                 { name: 'Digitalización', description: 'Escaneado y redibujo (logos, tarjetas). No incluye cambios.', priceA: 50, priceB: 32, priceC: 20 },
@@ -794,6 +874,7 @@
                 const activeTab = ref('profile'); 
                 const notification = ref('');
                 const isGeneratingPDF = ref(false);
+                const isMobileMenuOpen = ref(false); // Estado para menú móvil
                 
                 const loadLocalData = (key, defaultValue) => {
                     const saved = localStorage.getItem(key);
@@ -817,11 +898,11 @@
 
                 const clients = ref(loadLocalData('proforma_clients', []));
                 const services = ref(loadLocalData('proforma_services', []));
-                const proformaHistory = ref(loadLocalData('proforma_history', [])); // Nuevo: Historial
+                const proformaHistory = ref(loadLocalData('proforma_history', []));
                 
                 const logoBase64 = ref(localStorage.getItem('proforma_logo') || '');
 
-                const currentProformaId = ref(null); // Nuevo: ID para saber si estamos editando
+                const currentProformaId = ref(null); 
                 const selectedClientId = ref("");
                 const selectedServiceId = ref("");
                 const proformaServices = ref([]);
@@ -870,16 +951,13 @@
                     setTimeout(() => { notification.value = ''; }, duration);
                 };
 
-                // --- NUEVA PROFORMA ---
                 const nuevaProforma = () => {
-                    // Auto-incremento inteligente
                     let currentNum = invoiceData.value.number;
                     if (!isNaN(currentNum) && currentNum.trim() !== '') {
                         let numLength = currentNum.toString().length;
                         invoiceData.value.number = (parseInt(currentNum, 10) + 1).toString().padStart(numLength, '0');
                     }
                     
-                    // Limpiar campos
                     invoiceData.value.date = new Date().toISOString().split('T')[0];
                     invoiceData.value.clientName = "";
                     invoiceData.value.clientPhone = "";
@@ -894,7 +972,6 @@
                     showNotification("Nueva proforma iniciada ✨");
                 };
 
-                // --- HISTORIAL ---
                 const editHistoryItem = (item) => {
                     invoiceData.value = JSON.parse(JSON.stringify(item.invoiceData));
                     proformaServices.value = JSON.parse(JSON.stringify(item.services));
@@ -908,13 +985,10 @@
 
                 const deleteHistoryItem = (id) => {
                     proformaHistory.value = proformaHistory.value.filter(h => h.id !== id);
-                    if (currentProformaId.value === id) {
-                        currentProformaId.value = null;
-                    }
+                    if (currentProformaId.value === id) currentProformaId.value = null;
                     showNotification("Registro eliminado");
                 };
 
-                // --- CLIENTES ---
                 const editClient = (client) => {
                     editClientMode.value = true;
                     editingClientId.value = client.id;
@@ -960,7 +1034,6 @@
                     }
                 };
 
-                // --- SERVICIOS ---
                 const editService = (service) => {
                     editServiceMode.value = true;
                     editingServiceId.value = service.id;
@@ -976,7 +1049,6 @@
 
                 const saveService = () => {
                     if(!newService.value.name) return showNotification("Nombre requerido");
-                    
                     if (editServiceMode.value) {
                         const index = services.value.findIndex(s => s.id === editingServiceId.value);
                         if(index !== -1) services.value[index] = { ...newService.value, id: editingServiceId.value };
@@ -1015,7 +1087,6 @@
 
                 const removeService = (index) => proformaServices.value.splice(index, 1);
 
-                // --- TEXTAREAS & PDF ---
                 const addTerm = () => {
                     termsAndConditions.value.push("Escribe aquí el nuevo término o condición...");
                     nextTick(() => { resizeAllTextareas(); });
@@ -1037,13 +1108,12 @@
                     });
                 };
 
-                // --- IMPORTAR / EXPORTAR JSON ---
                 const exportData = () => {
                     const data = {
                         profile: userProfile.value,
                         clients: clients.value,
                         services: services.value,
-                        history: proformaHistory.value // Incluye historial
+                        history: proformaHistory.value 
                     };
                     const dataStr = JSON.stringify(data, null, 2);
                     const blob = new Blob([dataStr], { type: "application/json" });
@@ -1124,7 +1194,6 @@
                     }
                 };
 
-                // --- BUSCADOR LOCAL ---
                 const suggestPriceLocal = () => {
                     if(!newService.value.name) return showNotification("Escribe primero el nombre del servicio");
                     
@@ -1170,7 +1239,6 @@
                     }
                 };
 
-                // --- GENERADOR PDF Y GUARDADO DE HISTORIAL ---
                 const generatePDF = () => {
                     isGeneratingPDF.value = true;
                     showNotification("Generando PDF y Guardando... ⏳");
@@ -1191,7 +1259,6 @@
                         if (typeof html2pdf !== 'undefined') {
                             html2pdf().set(opt).from(element).save().then(() => {
                                 
-                                // Guardar en Historial una vez generado el PDF exitosamente
                                 const historyItem = {
                                     id: currentProformaId.value || Date.now().toString(),
                                     dateSaved: new Date().toISOString(),
@@ -1208,8 +1275,8 @@
                                     const index = proformaHistory.value.findIndex(p => p.id === currentProformaId.value);
                                     if (index !== -1) proformaHistory.value[index] = historyItem;
                                 } else {
-                                    currentProformaId.value = historyItem.id; // Asignar el ID creado
-                                    proformaHistory.value.unshift(historyItem); // Insertar al inicio de la lista
+                                    currentProformaId.value = historyItem.id; 
+                                    proformaHistory.value.unshift(historyItem); 
                                 }
 
                                 showNotification("¡Guardado en Historial y Descargado! ✅");
@@ -1229,7 +1296,7 @@
                 });
 
                 return {
-                    activeTab, notification, isGeneratingPDF, logoBase64,
+                    activeTab, notification, isGeneratingPDF, logoBase64, isMobileMenuOpen,
                     userProfile, invoiceData, formattedDate, clients, services, proformaServices,
                     proformaHistory, currentProformaId,
                     selectedClientId, selectedServiceId, newClient, newService,
