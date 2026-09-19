@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proforma App - Free Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf para generación de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -81,7 +80,7 @@
             padding: 0;
         }
 
-        /* Scroll personalizado para el panel izquierdo */
+        /* Scroll personalizado */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -100,20 +99,23 @@
         <div class="w-[380px] min-w-[380px] h-full bg-slate-900 text-slate-200 flex flex-col border-r border-slate-700 shadow-2xl z-10">
             <!-- Pestañas de navegación -->
             <div class="flex border-b border-slate-700">
-                <button @click="activeTab = 'profile'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'profile'}" class="flex-1 py-4 font-semibold text-xs transition-colors hover:bg-slate-800">
-                    <i class="fas fa-user-tie mb-1 block text-lg"></i> Mi Perfil
+                <button @click="activeTab = 'profile'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'profile'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                    <i class="fas fa-user-tie mb-1 block text-base"></i> Perfil
                 </button>
-                <button @click="activeTab = 'generator'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'generator'}" class="flex-1 py-4 font-semibold text-xs transition-colors hover:bg-slate-800">
-                    <i class="fas fa-file-invoice mb-1 block text-lg"></i> Proforma
+                <button @click="activeTab = 'generator'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'generator'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                    <i class="fas fa-file-invoice mb-1 block text-base"></i> Proforma
                 </button>
-                <button @click="activeTab = 'clients'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'clients'}" class="flex-1 py-4 font-semibold text-xs transition-colors hover:bg-slate-800">
-                    <i class="fas fa-users mb-1 block text-lg"></i> Clientes
+                <button @click="activeTab = 'history'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'history'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                    <i class="fas fa-history mb-1 block text-base"></i> Historial
                 </button>
-                <button @click="activeTab = 'services'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'services'}" class="flex-1 py-4 font-semibold text-xs transition-colors hover:bg-slate-800">
-                    <i class="fas fa-box-open mb-1 block text-lg"></i> Servicios
+                <button @click="activeTab = 'clients'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'clients'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                    <i class="fas fa-users mb-1 block text-base"></i> Clientes
                 </button>
-                <button @click="activeTab = 'settings'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'settings'}" class="flex-1 py-4 font-semibold text-xs transition-colors hover:bg-slate-800">
-                    <i class="fas fa-cog mb-1 block text-lg"></i> Ajustes
+                <button @click="activeTab = 'services'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'services'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                    <i class="fas fa-box-open mb-1 block text-base"></i> Servicios
+                </button>
+                <button @click="activeTab = 'settings'" :class="{'bg-slate-800 text-blue-400 border-b-2 border-blue-500': activeTab === 'settings'}" class="flex-1 py-3 px-1 font-semibold text-[10px] uppercase transition-colors hover:bg-slate-800">
+                    <i class="fas fa-cog mb-1 block text-base"></i> Ajustes
                 </button>
             </div>
 
@@ -141,18 +143,6 @@
                                 <input type="text" v-model="userProfile.brandColor" placeholder="#1a1924" maxlength="7" class="w-20 bg-slate-900 border border-slate-700 rounded p-1.5 text-white outline-none text-xs text-center font-mono uppercase">
                                 <input type="color" v-model="userProfile.brandColor" class="w-8 h-8 p-0 border-0 rounded cursor-pointer bg-transparent">
                             </div>
-                        </div>
-
-                        <!-- TOGGLE DE IVA -->
-                        <div class="flex items-center justify-between text-sm text-slate-300 mt-4 pt-4 border-t border-slate-700">
-                            <div>
-                                <span class="block font-bold">Facturar con IVA (15%)</span>
-                                <span class="text-[10px] text-slate-500">Aplica automáticamente el impuesto al total</span>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" v-model="userProfile.chargesIVA" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white border border-slate-700"></div>
-                            </label>
                         </div>
 
                         <button v-if="logoBase64" @click="clearLogo" class="mt-4 w-full bg-red-900/50 hover:bg-red-800 text-red-200 py-2 rounded text-xs transition-colors">
@@ -184,6 +174,18 @@
                 <!-- PESTAÑA: GENERADOR -->
                 <div v-show="activeTab === 'generator'" class="space-y-5">
                     
+                    <!-- Botón Nueva Proforma -->
+                    <div class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-slate-700 shadow-md">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-200">Editor de Proforma</h3>
+                            <p class="text-[10px] text-yellow-400" v-if="currentProformaId">Editando registro guardado</p>
+                            <p class="text-[10px] text-green-400" v-else>Documento Nuevo</p>
+                        </div>
+                        <button @click="nuevaProforma" class="bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white px-3 py-2 rounded text-xs font-bold transition-colors border border-green-600/30">
+                            <i class="fas fa-file-medical mr-1"></i> Nueva Proforma
+                        </button>
+                    </div>
+
                     <!-- Selector de Diseño -->
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <h3 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Diseño Visual</h3>
@@ -196,18 +198,30 @@
                         </select>
                     </div>
 
-                    <!-- Configuración General -->
+                    <!-- Configuración General e IVA -->
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <h3 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Datos Principales</h3>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Nº Proforma</label>
-                                <input type="text" v-model="invoiceData.number" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 outline-none text-sm">
+                                <input type="text" v-model="invoiceData.number" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 outline-none text-sm font-mono">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Fecha</label>
                                 <input type="date" v-model="invoiceData.date" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 outline-none text-sm" style="color-scheme: dark;">
                             </div>
+                        </div>
+
+                        <!-- TOGGLE DE IVA MOVIDO AQUI -->
+                        <div class="flex items-center justify-between text-sm text-slate-300 mt-4 pt-4 border-t border-slate-700">
+                            <div>
+                                <span class="block font-bold text-white">Facturar con IVA (15%)</span>
+                                <span class="text-[10px] text-slate-500">Aplica automáticamente el impuesto</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" v-model="userProfile.chargesIVA" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white border border-slate-700"></div>
+                            </label>
                         </div>
                     </div>
 
@@ -263,8 +277,52 @@
                     <div class="pt-2 pb-8">
                         <button @click="generatePDF" :disabled="isGeneratingPDF" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center disabled:opacity-50">
                             <i class="fas fa-file-pdf mr-2 text-xl"></i> 
-                            {{ isGeneratingPDF ? 'Generando...' : 'Descargar PDF' }}
+                            {{ isGeneratingPDF ? 'Generando...' : 'Descargar PDF (Guardar)' }}
                         </button>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA: HISTORIAL -->
+                <div v-show="activeTab === 'history'" class="space-y-5">
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4 shadow-md">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center">
+                            <i class="fas fa-history mr-2 text-blue-400"></i> Historial de Proformas
+                        </h3>
+                        <p class="text-[10px] text-slate-400 mt-1">Se guardan automáticamente al descargar el PDF.</p>
+                    </div>
+
+                    <div class="pb-8">
+                        <div v-if="proformaHistory.length === 0" class="text-slate-500 text-sm italic py-8 text-center bg-slate-800/50 rounded-xl border border-slate-700 border-dashed">
+                            No tienes proformas guardadas en el historial.
+                        </div>
+                        <div v-else class="space-y-3">
+                            <div v-for="item in proformaHistory" :key="item.id" class="bg-slate-800 p-4 rounded-xl border transition-colors" :class="{'border-yellow-500/50 bg-slate-800/80': currentProformaId === item.id, 'border-slate-700 hover:border-slate-600': currentProformaId !== item.id}">
+                                
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <span class="bg-slate-900 text-slate-300 text-[10px] px-2 py-1 rounded font-mono font-bold border border-slate-700">#{{ item.invoiceData.number }}</span>
+                                        <span class="text-[10px] text-slate-400 ml-2"><i class="far fa-calendar-alt"></i> {{ new Date(item.dateSaved).toLocaleDateString() }}</span>
+                                    </div>
+                                    <div class="font-bold text-green-400 text-sm">
+                                        ${{ item.total.toFixed(2) }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h4 class="text-white text-sm font-bold truncate" :title="item.invoiceData.clientName">{{ item.invoiceData.clientName || 'Cliente sin nombre' }}</h4>
+                                    <p class="text-[10px] text-slate-400">{{ item.services.length }} servicio(s) | {{ item.chargesIVA ? 'Con IVA' : 'Sin impuestos' }}</p>
+                                </div>
+
+                                <div class="flex gap-2 pt-3 border-t border-slate-700/50">
+                                    <button @click="editHistoryItem(item)" class="flex-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white py-1.5 rounded text-xs font-bold transition-colors border border-blue-600/30">
+                                        <i class="fas fa-edit mr-1"></i> {{ currentProformaId === item.id ? 'Editando' : 'Cargar / Editar' }}
+                                    </button>
+                                    <button @click="deleteHistoryItem(item.id)" class="w-10 flex justify-center items-center bg-red-900/30 text-red-400 hover:bg-red-600 hover:text-white rounded transition-colors border border-red-900/50" title="Eliminar registro">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -324,8 +382,8 @@
                             <input type="text" v-model="newService.name" placeholder="Nombre del servicio" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white outline-none text-sm">
                             <textarea v-model="newService.description" placeholder="Descripción detallada..." rows="2" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white outline-none resize-none text-sm"></textarea>
                             
-                            <button @click="suggestPriceLocal" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded transition-colors text-xs flex justify-center items-center shadow-md mb-2">
-                                <i class="fas fa-search-dollar mr-2"></i> Sugerir precio según Tarifario CDPA
+                            <button @click="suggestPriceLocal" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded transition-colors text-xs flex justify-center items-center shadow-md mb-2">
+                                <i class="fas fa-magic mr-2"></i> Sugerir precio según Tarifario CDPA
                             </button>
                             
                             <a href="https://www.dropbox.com/scl/fi/q5ds4n93kybq7f5w2oyu1/TarifarioCDPA_2021.pdf?rlkey=x52l6h1qh5r3sxatj0gs8qgdy&e=1&dl=0" target="_blank" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 py-2 rounded transition-colors text-xs flex justify-center items-center shadow-md mb-2 border border-slate-600">
@@ -383,12 +441,10 @@
 
                 <!-- PESTAÑA: AJUSTES -->
                 <div v-show="activeTab === 'settings'" class="space-y-5 mb-8">
-                    
-                    <!-- Importar / Exportar Datos -->
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <h3 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Datos (JSON)</h3>
                         <p class="text-[11px] text-slate-400 mb-4 leading-relaxed">
-                            Los datos se guardan automáticamente en tu navegador. Usa estas opciones para descargar una copia de seguridad o para pasarlos a otra computadora.
+                            Los datos se guardan automáticamente en tu navegador. Usa estas opciones para descargar una copia de seguridad (incluye perfil, clientes, servicios e historial).
                         </p>
                         <div class="flex flex-col gap-3">
                             <button @click="exportData" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded transition-colors text-sm flex justify-center items-center">
@@ -426,11 +482,8 @@
             <!-- CONTENEDOR PDF -->
             <div id="proforma-document" class="proforma-container print-area">
                 
-                <!-- ========================================== -->
                 <!-- DISEÑO 1: CLÁSICO (ACTUAL) -->
-                <!-- ========================================== -->
                 <div v-if="userProfile.selectedDesign === 'classic'" class="w-full">
-                    <!-- Cabecera -->
                     <div class="header-bg p-10 flex justify-between items-start">
                         <div class="w-1/2">
                             <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-24 object-contain">
@@ -450,7 +503,6 @@
                         </div>
                     </div>
 
-                    <!-- Info Cliente -->
                     <div class="px-10 py-6 flex justify-between items-start">
                         <div class="w-1/2">
                             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Proforma a nombre de:</h3>
@@ -481,11 +533,8 @@
                     </div>
                 </div>
 
-                <!-- ========================================== -->
                 <!-- DISEÑO 2: MODERNO (BLOQUE OSCURO) -->
-                <!-- ========================================== -->
                 <div v-else-if="userProfile.selectedDesign === 'modern'" class="w-full relative">
-                    <!-- Top Logotipo -->
                     <div class="flex justify-between items-center px-10 py-8">
                         <div class="w-1/2">
                             <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-20 object-contain">
@@ -496,7 +545,6 @@
                         </div>
                     </div>
 
-                    <!-- Bloque Oscuro (Cliente y Totales) -->
                     <div class="bg-gray-800 px-10 py-8 flex justify-between relative mt-2">
                         <div class="w-1/2 text-sm text-gray-300 space-y-2 relative z-10">
                             <p class="text-xs text-gray-500 uppercase tracking-widest mb-1 font-bold">Proforma para:</p>
@@ -508,7 +556,6 @@
                             </div>
                         </div>
                         
-                        <!-- Caja Total Sobresaliente -->
                         <div class="w-2/5 bg-white p-6 shadow-xl absolute right-10 -top-8 border-t-8" :style="{ borderColor: userProfile.brandColor }">
                             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-right">Total a Pagar</p>
                             <p class="text-3xl font-bold text-right" :style="{ color: userProfile.brandColor }">${{ grandTotal.toFixed(2) }}</p>
@@ -520,11 +567,8 @@
                     </div>
                 </div>
 
-                <!-- ========================================== -->
                 <!-- DISEÑO 3: ELEGANTE (CURVAS Y BORDES) -->
-                <!-- ========================================== -->
                 <div v-else-if="userProfile.selectedDesign === 'elegant'" class="w-full">
-                    <!-- Top con forma curva y logo -->
                     <div class="flex justify-between items-start border-b-2 border-gray-100 pb-8">
                         <div class="w-1/2 p-10 rounded-br-[60px]" :style="{ backgroundColor: userProfile.brandColor }">
                             <img v-if="logoBase64" :src="logoBase64" alt="Logo" class="max-h-24 object-contain">
@@ -538,7 +582,6 @@
                         </div>
                     </div>
 
-                    <!-- Título e Info -->
                     <div class="px-10 py-8 flex justify-between items-end">
                         <div class="w-1/3">
                             <h1 class="text-4xl font-black uppercase tracking-tight" :style="{ color: userProfile.brandColor }">Proforma</h1>
@@ -553,9 +596,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================== -->
                 <!-- DISEÑO 4: MINIMALISTA (LIMPIO) -->
-                <!-- ========================================== -->
                 <div v-else-if="userProfile.selectedDesign === 'minimalist'" class="w-full">
                     <div class="px-12 pt-12 pb-6 flex justify-between items-end border-b border-gray-200">
                         <div class="w-1/2">
@@ -582,9 +623,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================== -->
                 <!-- SECCIÓN COMÚN: TABLA DE SERVICIOS -->
-                <!-- ========================================== -->
                 <div class="px-10 mb-2 mt-4 min-h-[250px]" :class="{'px-12': userProfile.selectedDesign === 'minimalist'}">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -628,13 +667,11 @@
                     <!-- Totales (Diseño ajustado según plantilla) -->
                     <div class="flex justify-end mt-4" :class="{'justify-between items-end': userProfile.selectedDesign === 'elegant'}">
                         
-                        <!-- Bloque lateral para 'Elegante' -->
                         <div v-if="userProfile.selectedDesign === 'elegant'" class="w-1/2 p-4 bg-gray-50 text-[10px] text-gray-500 rounded-lg">
                             <p class="font-bold text-gray-700 uppercase mb-2">Notas / Condiciones:</p>
                             <p>Esta proforma tiene una validez de 15 días.</p>
                         </div>
 
-                        <!-- Caja de sumatoria -->
                         <div class="w-2/5" :class="{'bg-gray-50 p-4 rounded-xl': userProfile.selectedDesign === 'minimalist'}">
                             <div class="flex justify-between py-1.5 text-sm text-gray-600 border-b border-gray-100">
                                 <span>Subtotal</span><span>${{ subtotal.toFixed(2) }}</span>
@@ -651,9 +688,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================== -->
                 <!-- SECCIÓN COMÚN: TÉRMINOS Y CONDICIONES -->
-                <!-- ========================================== -->
                 <div class="px-10 pb-8 mt-6" :class="{'px-12': userProfile.selectedDesign === 'minimalist', 'opacity-50 text-[9px]': userProfile.selectedDesign === 'modern'}">
                     <h3 class="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center justify-between">
                         <span :style="{ color: userProfile.selectedDesign === 'minimalist' ? userProfile.brandColor : 'inherit' }">Términos y Condiciones</span>
@@ -676,62 +711,81 @@
     <script type="module">
         import { createApp, ref, computed, onMounted, nextTick, watch } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
 
-        // BASE DE DATOS COMPLETA CDPA 2025-2026
         const cdpaData = {
             identidad: [
                 { name: 'Nueva Identidad Corporativa', description: 'Nuevo logotipo, Isotipo o Isologotipo + Manual de Uso y hasta 10 aplicaciones.', priceA: 1500, priceB: 850, priceC: 550 },
-                { name: 'Nuevo logotipo/isotipo', description: 'No incluye Manual de Uso ni aplicaciones.', priceA: 0, priceB: 0, priceC: 430 },
+                { name: 'Nuevo logotipo/isotipo', description: 'No incluye Manual de Uso ni aplicaciones.', priceA: 430, priceB: 430, priceC: 430 },
                 { name: 'Rediseño Identidad Corporativa', description: 'Creación de un nuevo logo en reemplazo de uno ya existente + Manual de Uso y hasta 10 apl.', priceA: 1400, priceB: 800, priceC: 500 },
+                { name: 'Rediseño logotipo/isotipo', description: 'No incluye Manual de Uso ni aplicaciones.', priceA: 220, priceB: 220, priceC: 220 },
                 { name: 'Restyling Identidad Corporativo', description: 'Optimización del estilo de un logo ya existente + Manual de Uso y hasta 10 aplicaciones.', priceA: 900, priceB: 500, priceC: 300 },
+                { name: 'Restyling logotipo/isotipo', description: 'No incluye Manual de Uso ni aplicaciones', priceA: 250, priceB: 250, priceC: 250 },
                 { name: 'Manual de normas/uso', description: 'Para una marca existente.', priceA: 300, priceB: 200, priceC: 100 },
+                { name: 'Identidad efímera', description: 'Identidad original adaptada. Ej aniversario (uso anual), evento/concurso (uso estacional).', priceA: 500, priceB: 300, priceC: 200 },
+                { name: 'Identidad de un producto', description: 'Consumo masivo.', priceA: 1000, priceB: 750, priceC: 500 },
                 { name: 'Naming corporativo/institucional', description: 'Desarrollo de un nombre de marca.', priceA: 300, priceB: 200, priceC: 100 },
                 { name: 'Slogan / Lema', description: 'Definición o manera de ser de una marca.', priceA: 200, priceB: 100, priceC: 60 }
             ],
             papeleria: [
                 { name: 'Papelería básica', description: 'Utilizando marca existente. Aplicación hasta 10 piezas (tarjeta, sobre, firma, etc.)', priceA: 450, priceB: 300, priceC: 180 },
-                { name: 'Tarjetas personales / Comerciales', description: 'Factura, recibo, remito, anotadores, tarjetas.', priceA: 40, priceB: 30, priceC: 20 },
+                { name: 'Papelería comercial', description: 'Factura, recibo, remito, anotadores, formularios, etc.', priceA: 120, priceB: 90, priceC: 60 },
+                { name: 'Tarjetas personales', description: 'Utilizando marca existente o identidad previamente diseñada.', priceA: 40, priceB: 30, priceC: 20 },
                 { name: 'Firma o encabezado de e-mail', description: 'Imagen estática. Utilizando marca existente.', priceA: 60, priceB: 40, priceC: 20 },
-                { name: 'Carpeta empresarial/institucional', description: 'Tipo A3 plegada, con o sin solapas. Utilizando marca existente.', priceA: 90, priceB: 60, priceC: 40 }
+                { name: 'Carpeta empresarial/institucional', description: 'Tipo A3 plegada, con o sin solapas.', priceA: 90, priceB: 60, priceC: 40 },
+                { name: 'Invitaciones empresariales o tarjetas de fin de año', description: 'No incluye costo de fotografía.', priceA: 80, priceB: 60, priceC: 40 }
             ],
             publicidad: [
+                { name: 'Volante/Flyer sólo frente', description: 'No incluye costo de fotografías.', priceA: 70, priceB: 40, priceC: 30 },
                 { name: 'Volante/Flyer frente y dorso', description: 'No incluye costo de fotografías.', priceA: 80, priceB: 60, priceC: 40 },
                 { name: 'Folleto tríptico', description: 'Frente y dorso, 2 pliegues. No incluye costo de fotografías.', priceA: 250, priceB: 150, priceC: 90 },
                 { name: 'Brochure', description: 'Folleto de alta complejidad. Hasta 10 páginas. No incluye fotografías.', priceA: 400, priceB: 300, priceC: 200 },
-                { name: 'Redes sociales: avatar + portada', description: 'Costo x cuenta. Adaptación a otra red social + 10% c/u.', priceA: 80, priceB: 40, priceC: 20 },
-                { name: 'Diseño de post estático / placa', description: 'Incluye redacción y publicación del post.', priceA: 80, priceB: 40, priceC: 20 },
-                { name: 'Redes sociales: placa animada', description: 'De 2 a 10 slides. Incluye redacción y publicación del post.', priceA: 90, priceB: 50, priceC: 30 },
+                { name: 'Key Visual', description: 'Estética y concepto que la marca desea transmitir en una campaña específica', priceA: 200, priceB: 130, priceC: 90 },
+                { name: 'Redes sociales: avatar/perfil + portada', description: 'Costo x cuenta. Adaptación a otra red social + 10% c/u.', priceA: 80, priceB: 40, priceC: 20 },
+                { name: 'Redes sociales: placa para posteo', description: 'Incluye redacción y publicación del post.', priceA: 80, priceB: 40, priceC: 20 },
+                { name: 'Redes sociales: animado para posteo', description: 'De 2 a 10 slides. Incluye redacción y publicación del post.', priceA: 90, priceB: 50, priceC: 30 },
                 { name: 'Gestión de Comunidad (Community Manager)', description: 'Costo mensual x cuenta. Posteos/actualizaciones.', priceA: 120, priceB: 80, priceC: 40 },
                 { name: 'Social Media Plan', description: 'Planteo de estrategia de marketing y comunicación en redes sociales.', priceA: 280, priceB: 200, priceC: 150 }
             ],
             editorial: [
                 { name: 'Arte de tapa', description: 'Tapa, contratapa y lomo (revista, libro, etc.)', priceA: 200, priceB: 150, priceC: 100 },
+                { name: 'Armado de página simple', description: 'Costo de diseño por página original. Libro, Memoria y Balance, etc.', priceA: 20, priceB: 10, priceC: 5 },
                 { name: 'Armado de página compuesta', description: 'Costo de diseño por página original. Revista, manuales de estudio, etc.', priceA: 22, priceB: 12, priceC: 10 },
                 { name: 'Libro (cuerpo y puesta en página)', description: 'Hasta 100 páginas.', priceA: 800, priceB: 550, priceC: 300 },
-                { name: 'Catálogo de productos', description: 'Hasta 20 páginas', priceA: 700, priceB: 500, priceC: 300 }
+                { name: 'Revista', description: 'Hasta 30 páginas. No incluye armado de publicidades.', priceA: 600, priceB: 400, priceC: 200 },
+                { name: 'Catálogo de productos', description: 'Hasta 20 páginas', priceA: 700, priceB: 500, priceC: 300 },
+                { name: 'Menú/carta para restaurante', description: 'Tapa y hasta 6 paginas.', priceA: 100, priceB: 60, priceC: 30 }
             ],
             ilustracion: [
-                { name: 'Digitalización', description: 'Escaneado y redibujo. No incluye cambios.', priceA: 50, priceB: 32, priceC: 20 },
+                { name: 'Digitalización', description: 'Escaneado y redibujo (logos, tarjetas). No incluye cambios.', priceA: 50, priceB: 32, priceC: 20 },
+                { name: 'Ilustración mano alzada', description: 'Para revista/folleto/web.', priceA: 300, priceB: 200, priceC: 100 },
                 { name: 'Ilustración vectorial', description: 'Para revista/folleto/web.', priceA: 350, priceB: 250, priceC: 150 },
                 { name: 'Ilustración/modelado 3D', description: 'Para revista/folleto/web.', priceA: 550, priceB: 450, priceC: 300 },
+                { name: 'Animación de personaje o escenario', description: 'Hasta 60 segundos.', priceA: 660, priceB: 500, priceC: 340 },
                 { name: 'Infografía', description: 'Desarrollo complejo.', priceA: 1000, priceB: 650, priceC: 350 }
             ],
             packaging: [
                 { name: 'Pack Producto', description: 'Desarrollo visual para caja o envoltorio.', priceA: 700, priceB: 500, priceC: 350 },
                 { name: 'Etiqueta simple', description: 'Etiqueta única aplicada, impresión sobre envase, bolsa, etc.', priceA: 300, priceB: 200, priceC: 90 },
                 { name: 'Etiqueta compuesta', description: 'Ej vino: etiqueta + contraetiqueta + cápsula.', priceA: 700, priceB: 500, priceC: 300 },
-                { name: 'Modelado 3D de envase', description: 'Costo por envase previamente diseñado.', priceA: 70, priceB: 60, priceC: 50 }
+                { name: 'Envase', description: 'Desarrollo morfológico de estuche troquelado, envase PET, etc.', priceA: 800, priceB: 450, priceC: 450 },
+                { name: 'Modelado 3D de envase', description: 'Costo por envase previamente diseñado.', priceA: 70, priceB: 60, priceC: 50 },
+                { name: 'Renderizado de modelo 3D', description: 'Precio unitario de cada imágen/vista.', priceA: 20, priceB: 15, priceC: 10 }
             ],
             web: [
                 { name: 'Diseño "landing page" o página única', description: 'Home de presentación. Puede incluir 1 slider/carrusel.', priceA: 120, priceB: 110, priceC: 90 },
+                { name: 'Implementación de Wordpress o similar', description: 'Instalación y configuración, carga de datos.', priceA: 540, priceB: 460, priceC: 380 },
                 { name: 'Diseño sitio HTML5 y CSS3', description: 'Home y 5 secciones.', priceA: 690, priceB: 590, priceC: 490 },
                 { name: 'Diseño sitio responsivo/adaptativo', description: 'Home y 5 secciones para 3 dispositivos (PC, mobile, tablet).', priceA: 1000, priceB: 850, priceC: 720 },
-                { name: 'Diseño APP UX/UI', description: 'Navegación/usabilidad y diseño visual. Hasta 5 pantallas.', priceA: 1320, priceB: 980, priceC: 660 }
+                { name: 'Diseño APP UX (experiencia de usuario)', description: 'Navegación/usabilidad. Hasta 5 pantallas.', priceA: 660, priceB: 490, priceC: 330 },
+                { name: 'Diseño APP UI (interfaz de usuario)', description: 'Selección y distribución de los elementos. Hasta 5 pantallas.', priceA: 660, priceB: 490, priceC: 330 }
             ],
             audiovisual: [
-                { name: 'En locación: sesión fotográfica', description: 'Hasta 2 horas, 1 cámara.', priceA: 400, priceB: 250, priceC: 200 },
                 { name: 'Filmación', description: 'Costo por hora. Incluye 1 cámara FullHD + micrófono + luz.', priceA: 200, priceB: 150, priceC: 100 },
-                { name: 'Spot publicitario complejidad media', description: 'Edición de tomas y placas estáticas. Hasta 30 segundos.', priceA: 800, priceB: 700, priceC: 600 },
-                { name: 'Composición y grabación de música original', description: 'Hasta 1 minuto. No incluye voz/locución.', priceA: 330, priceB: 280, priceC: 240 }
+                { name: 'Retoque digital', description: 'Costo por cada imagen. Fotomontajes, restauración, etc.', priceA: 40, priceB: 30, priceC: 20 },
+                { name: 'Placa animada 2D', description: 'Texto, fondo y animación. Hasta 30 segundos', priceA: 50, priceB: 30, priceC: 20 },
+                { name: 'Spot publicitario complejidad baja', description: 'Edición de tomas y placas estáticas. Hasta 30 segundos.', priceA: 400, priceB: 300, priceC: 200 },
+                { name: 'Spot publicitario complejidad alta', description: 'Efectos visuales, postproducción avanzada. Hasta 30 segundos.', priceA: 1400, priceB: 1200, priceC: 1000 },
+                { name: 'Composición y grabación de música original', description: 'Hasta 1 minuto. No incluye voz/locución.', priceA: 330, priceB: 280, priceC: 240 },
+                { name: 'En locación: sesión fotográfica', description: 'Hasta 2 horas, 1 cámara.', priceA: 400, priceB: 250, priceC: 200 }
             ]
         };
 
@@ -741,7 +795,6 @@
                 const notification = ref('');
                 const isGeneratingPDF = ref(false);
                 
-                // Carga de datos iniciales desde LocalStorage
                 const loadLocalData = (key, defaultValue) => {
                     const saved = localStorage.getItem(key);
                     return saved ? JSON.parse(saved) : defaultValue;
@@ -755,18 +808,20 @@
                     disciplines: [],
                     brandColor: '#1a1924', 
                     selectedDesign: 'classic',
-                    chargesIVA: false // Estado del interruptor IVA
+                    chargesIVA: false
                 }));
                 
-                // Compatibilidad hacia atrás (por si tienen un perfil viejo guardado)
                 if (!userProfile.value.brandColor) userProfile.value.brandColor = '#1a1924';
                 if (!userProfile.value.selectedDesign) userProfile.value.selectedDesign = 'classic';
                 if (typeof userProfile.value.chargesIVA === 'undefined') userProfile.value.chargesIVA = false;
 
                 const clients = ref(loadLocalData('proforma_clients', []));
                 const services = ref(loadLocalData('proforma_services', []));
+                const proformaHistory = ref(loadLocalData('proforma_history', [])); // Nuevo: Historial
+                
                 const logoBase64 = ref(localStorage.getItem('proforma_logo') || '');
 
+                const currentProformaId = ref(null); // Nuevo: ID para saber si estamos editando
                 const selectedClientId = ref("");
                 const selectedServiceId = ref("");
                 const proformaServices = ref([]);
@@ -794,10 +849,10 @@
                 const newClient = ref({ name: '', type: 'A', phone: '', email: '', address: '' });
                 const newService = ref({ name: '', description: '', priceA: 0, priceB: 0, priceC: 0 });
 
-                // Guarda automáticamente cambios a LocalStorage
                 watch(userProfile, (newVal) => localStorage.setItem('proforma_profile', JSON.stringify(newVal)), { deep: true });
                 watch(clients, (newVal) => localStorage.setItem('proforma_clients', JSON.stringify(newVal)), { deep: true });
                 watch(services, (newVal) => localStorage.setItem('proforma_services', JSON.stringify(newVal)), { deep: true });
+                watch(proformaHistory, (newVal) => localStorage.setItem('proforma_history', JSON.stringify(newVal)), { deep: true });
 
                 const formattedDate = computed(() => {
                     if (!invoiceData.value.date) return '';
@@ -807,13 +862,7 @@
                 });
 
                 const subtotal = computed(() => proformaServices.value.reduce((sum, item) => sum + (item.quantity * item.price), 0));
-                
-                // Cálculo automático del IVA 15%
-                const ivaAmount = computed(() => {
-                    return userProfile.value.chargesIVA ? subtotal.value * 0.15 : 0;
-                });
-                
-                // Total final (Subtotal + IVA)
+                const ivaAmount = computed(() => userProfile.value.chargesIVA ? subtotal.value * 0.15 : 0);
                 const grandTotal = computed(() => subtotal.value + ivaAmount.value);
 
                 const showNotification = (msg, duration = 3000) => {
@@ -821,7 +870,51 @@
                     setTimeout(() => { notification.value = ''; }, duration);
                 };
 
-                // --- MANEJO DE CLIENTES ---
+                // --- NUEVA PROFORMA ---
+                const nuevaProforma = () => {
+                    // Auto-incremento inteligente
+                    let currentNum = invoiceData.value.number;
+                    if (!isNaN(currentNum) && currentNum.trim() !== '') {
+                        let numLength = currentNum.toString().length;
+                        invoiceData.value.number = (parseInt(currentNum, 10) + 1).toString().padStart(numLength, '0');
+                    }
+                    
+                    // Limpiar campos
+                    invoiceData.value.date = new Date().toISOString().split('T')[0];
+                    invoiceData.value.clientName = "";
+                    invoiceData.value.clientPhone = "";
+                    invoiceData.value.clientEmail = "";
+                    invoiceData.value.clientAddress = "";
+                    invoiceData.value.clientType = "A";
+                    
+                    selectedClientId.value = "";
+                    proformaServices.value = [];
+                    currentProformaId.value = null;
+                    
+                    showNotification("Nueva proforma iniciada ✨");
+                };
+
+                // --- HISTORIAL ---
+                const editHistoryItem = (item) => {
+                    invoiceData.value = JSON.parse(JSON.stringify(item.invoiceData));
+                    proformaServices.value = JSON.parse(JSON.stringify(item.services));
+                    termsAndConditions.value = JSON.parse(JSON.stringify(item.terms));
+                    userProfile.value.chargesIVA = item.chargesIVA !== undefined ? item.chargesIVA : userProfile.value.chargesIVA;
+                    currentProformaId.value = item.id;
+                    activeTab.value = 'generator';
+                    showNotification("Proforma cargada para editar ✏️");
+                    nextTick(() => { resizeAllTextareas(); });
+                };
+
+                const deleteHistoryItem = (id) => {
+                    proformaHistory.value = proformaHistory.value.filter(h => h.id !== id);
+                    if (currentProformaId.value === id) {
+                        currentProformaId.value = null;
+                    }
+                    showNotification("Registro eliminado");
+                };
+
+                // --- CLIENTES ---
                 const editClient = (client) => {
                     editClientMode.value = true;
                     editingClientId.value = client.id;
@@ -867,7 +960,7 @@
                     }
                 };
 
-                // --- MANEJO DE SERVICIOS ---
+                // --- SERVICIOS ---
                 const editService = (service) => {
                     editServiceMode.value = true;
                     editingServiceId.value = service.id;
@@ -949,7 +1042,8 @@
                     const data = {
                         profile: userProfile.value,
                         clients: clients.value,
-                        services: services.value
+                        services: services.value,
+                        history: proformaHistory.value // Incluye historial
                     };
                     const dataStr = JSON.stringify(data, null, 2);
                     const blob = new Blob([dataStr], { type: "application/json" });
@@ -974,17 +1068,16 @@
                             if (data.profile) userProfile.value = data.profile;
                             if (data.clients) clients.value = data.clients;
                             if (data.services) services.value = data.services;
+                            if (data.history) proformaHistory.value = data.history;
                             showNotification("Datos importados exitosamente ✅");
                         } catch (err) {
                             showNotification("Error: Archivo no válido");
-                            console.error(err);
                         }
                         event.target.value = '';
                     };
                     reader.readAsText(file);
                 };
 
-                // --- CONFIGURACIÓN E IMÁGENES ---
                 const handleLogoUpload = (event) => {
                     const file = event.target.files[0];
                     if (file) {
@@ -1025,13 +1118,13 @@
                     });
 
                     if (addedCount > 0) {
-                        showNotification(`¡Se añadieron ${addedCount} servicios sugeridos!`);
+                        showNotification(`¡Se añadieron ${addedCount} servicios!`);
                     } else {
-                        showNotification("Los servicios de esas disciplinas ya estaban en tu tarifario.");
+                        showNotification("Los servicios ya estaban en tu tarifario.");
                     }
                 };
 
-                // --- BUSCADOR LOCAL DE PRECIOS CDPA ---
+                // --- BUSCADOR LOCAL ---
                 const suggestPriceLocal = () => {
                     if(!newService.value.name) return showNotification("Escribe primero el nombre del servicio");
                     
@@ -1058,11 +1151,6 @@
                             else if (itemDesc.includes(word)) score += 5; 
                         });
 
-                        queryWords.forEach(word => {
-                            const regex = new RegExp(`\\b${word}\\b`, 'g');
-                            if ((itemName.match(regex) || []).length > 0) score += 10;
-                        });
-
                         if (score > maxScore) {
                             maxScore = score;
                             bestMatch = item;
@@ -1076,16 +1164,16 @@
                         if (!newService.value.description) {
                             newService.value.description = bestMatch.description;
                         }
-                        showNotification(`¡Encontrado! Sugerencia: ${bestMatch.name} 💡`);
+                        showNotification(`Sugerencia: ${bestMatch.name} 💡`);
                     } else {
-                        showNotification("No se encontraron coincidencias exactas. Revisa el Tarifario PDF.");
+                        showNotification("No se encontraron coincidencias exactas.");
                     }
                 };
 
-                // --- GENERADOR PDF ---
+                // --- GENERADOR PDF Y GUARDADO DE HISTORIAL ---
                 const generatePDF = () => {
                     isGeneratingPDF.value = true;
-                    showNotification("Generando PDF... ⏳");
+                    showNotification("Generando PDF y Guardando... ⏳");
                     
                     setTimeout(() => {
                         const element = document.getElementById('proforma-document');
@@ -1102,12 +1190,29 @@
 
                         if (typeof html2pdf !== 'undefined') {
                             html2pdf().set(opt).from(element).save().then(() => {
-                                let currentNum = invoiceData.value.number;
-                                if (!isNaN(currentNum) && currentNum.trim() !== '') {
-                                    let numLength = currentNum.toString().length;
-                                    invoiceData.value.number = (parseInt(currentNum, 10) + 1).toString().padStart(numLength, '0');
+                                
+                                // Guardar en Historial una vez generado el PDF exitosamente
+                                const historyItem = {
+                                    id: currentProformaId.value || Date.now().toString(),
+                                    dateSaved: new Date().toISOString(),
+                                    invoiceData: JSON.parse(JSON.stringify(invoiceData.value)),
+                                    services: JSON.parse(JSON.stringify(proformaServices.value)),
+                                    terms: JSON.parse(JSON.stringify(termsAndConditions.value)),
+                                    subtotal: subtotal.value,
+                                    ivaAmount: ivaAmount.value,
+                                    total: grandTotal.value,
+                                    chargesIVA: userProfile.value.chargesIVA
+                                };
+                                
+                                if (currentProformaId.value) {
+                                    const index = proformaHistory.value.findIndex(p => p.id === currentProformaId.value);
+                                    if (index !== -1) proformaHistory.value[index] = historyItem;
+                                } else {
+                                    currentProformaId.value = historyItem.id; // Asignar el ID creado
+                                    proformaHistory.value.unshift(historyItem); // Insertar al inicio de la lista
                                 }
-                                showNotification("¡PDF Descargado! ✅");
+
+                                showNotification("¡Guardado en Historial y Descargado! ✅");
                                 isGeneratingPDF.value = false;
                             }).catch(err => {
                                 showNotification("Error al generar PDF.");
@@ -1117,7 +1222,6 @@
                     }, 500);
                 };
 
-                // Iniciar con datos de ejemplo si es primera vez
                 onMounted(() => {
                     if(services.value.length === 0 && userProfile.value.disciplines.length === 0) {
                         showNotification("¡Bienvenido! Empieza configurando tu Perfil.", 5000);
@@ -1127,12 +1231,14 @@
                 return {
                     activeTab, notification, isGeneratingPDF, logoBase64,
                     userProfile, invoiceData, formattedDate, clients, services, proformaServices,
+                    proformaHistory, currentProformaId,
                     selectedClientId, selectedServiceId, newClient, newService,
                     subtotal, ivaAmount, grandTotal, termsAndConditions, editClientMode, editServiceMode,
                     loadClientData, addServiceToProforma, removeService, resizeTextarea,
                     saveClient, deleteClient, saveService, deleteService, editClient, cancelEditClient,
                     editService, cancelEditService, suggestPriceLocal,
-                    generatePDF, handleLogoUpload, clearLogo, generateServicesFromDisciplines,
+                    generatePDF, nuevaProforma, editHistoryItem, deleteHistoryItem,
+                    handleLogoUpload, clearLogo, generateServicesFromDisciplines,
                     addTerm, removeTerm, exportData, importData
                 };
             }
